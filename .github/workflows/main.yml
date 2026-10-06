@@ -1,0 +1,33 @@
+name: Building LEAST GAME I MADE
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: devkitpro/devkitarm:latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Build NDS ROM
+        run: make
+
+      - name: Upload NDS
+        uses: actions/upload-artifact@v4
+        with:
+          name: lowest-number-nds
+          path: "*.nds"
+          if-no-files-found: error
+
+
+
+That ZIP should contain your `.nds`.
+
+**One caveat:** this will solve the compiler/environment mess, but your current Makefile may still fail because we've been modifying it during troubleshooting. If you want the cleanest route, I can give you a **known-good modern devkitPro `Makefile` specifically for this project** next.
