@@ -8,10 +8,10 @@
 #define H 192
 #define ROWS 8
 
-/* RGB555 helper. */
+
 #define RGB(r,g,b) ((u16)(((r)>>3) | (((g)>>3)<<5) | (((b)>>3)<<10)))
 
-/* Pastel palette: cream, pink, blue, lavender, mint. */
+
 #define CREAM RGB(255,248,238)
 #define PINK RGB(255,190,205)
 #define BLUE RGB(170,215,245)
@@ -93,10 +93,7 @@ static void textBottom(const char *s, int x, int y) {
     iprintf("\x1b[%d;%dH%s", y+1, x/8+1, s);
 }
 
-/*
- * The DS console font is deliberately used for labels, while the bitmap
- * layer supplies the pastel game panels and large touch targets.
- */
+
 static void drawTopArt(void) {
     memset(topBmp,0,W*H*2);
     rect(topBmp,0,0,W,H,CREAM);
@@ -107,7 +104,7 @@ static void drawTopArt(void) {
     rect(topBmp,12,48,232,126,WHITE);
     border(topBmp,12,48,232,126,LAV);
 
-    /* Preview cards. */
+  
     for(int r=0;r<3;r++) {
         int y=57+r*38;
         u16 col=(r==0)?BLUE:(r==1)?MINT:LAV;
@@ -125,7 +122,7 @@ static void drawBottomArt(void) {
     rect(bottomBmp,10,7,236,30,BLUE);
     border(bottomBmp,10,7,236,30,WHITE);
 
-    /* Four giant touch cards. */
+ 
     for(int i=0;i<4;i++) {
         int x=8+i*61;
         u16 col=(i%2==0)?PINK:MINT;
@@ -191,7 +188,7 @@ static void setupScreens(void) {
     topBmp = bgGetGfxPtr(topBg);
     bottomBmp = bgGetGfxPtr(botBg);
 
-    /* Text console on BG0 over the bitmap art. */
+
     consoleInit(NULL,0,BgType_Text4bpp,BgSize_T_256x256,31,0,true,true);
     consoleInitDefault();
 }
