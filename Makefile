@@ -1,49 +1,50 @@
-.SUFFIXES:
+TARGET      := lowest_number
+BUILD       := build
+SOURCES     := source
+DATA        :=
+INCLUDES    :=
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment")
-endif
+ARCH        := -mthumb -mthumb-interwork -mcpu=arm9e -mtune=arm946e-s
 
-include $(DEVKITARM)/ds_rules
+CFLAGS      := -g -Wall -O2 -ffunction-sections -fdata-sections $(ARCH)
+CFLAGS      += $(INCLUDE) -DARM9
 
-TARGET := lowest_number
+CXXFLAGS    := $(CFLAGS) -fno-rtti -fno-exceptions
 
-BUILD := build
-SOURCES := source
-INCLUDES := include
+ASFLAGS     := -g $(ARCH)
 
-ARCH := -march=armv5te -mtune=arm946e-s -mthumb
+LDFLAGS     := -specs=ds_arm9.specs -g $(ARCH)
+LDFLAGS     += -Wl,-Map,$(notdir $*.map)
 
-CFLAGS := -g -Wall -O2 -ffunction-sections -fdata-sections \
-	$(ARCH) $(INCLUDE) -DARM9
+LIBS        := -lnds9
 
-CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
-
-ASFLAGS := -g $(ARCH)
-
-LDFLAGS := -specs=ds_arm9.specs -g \
-	-Wl,-Map,$(notdir $*.map)
-
-LIBS := -lnds9
-
-LIBDIRS := $(LIBNDS) $(PORTLIBS)
+LIBDIRS     := $(LIBNDS) $(PORTLIBS)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 
+export OUTPUT := $(CURDIR)/$(TARGET)
+
+export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+                $(foreach dir,$(DATA),$(CURDIR)/$(dir))
+
+export DEPSDIR := $(CURDIR)/$(BUILD)
+
+CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+OFILES := $(CFILES:.c=.o)
+
 export INCLUDE := $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
-	$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-	-I$(CURDIR)/$(BUILD)
+                  $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+                  -I$(CURDIR)/$(BUILD)
 
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 .PHONY: all clean
 
-all: $(BUILD)
+all:
+	$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 $(BUILD):
 	@mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) \
-		-f $(CURDIR)/Makefile
 
 clean:
 	@echo clean...
@@ -53,19 +54,22 @@ else
 
 DEPENDS := $(OFILES:.o=.d)
 
-CFILES := $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-OFILES := $(foreach file,$(CFILES),$(BUILD)/$(file:.c=.o))
+.PHONY: all
 
-$(TARGET).nds: $(TARGET).elf
+all: $(OUTPUT).nds
 
-$(TARGET).elf: $(OFILES)
+$(OUTPUT).nds: $(OUTPUT).elf
+	@$(NDSTOOL) -c $@ -9 $<
+
+$(OUTPUT).elf: $(OFILES)
 	$(CC) $(LDFLAGS) $(LIBPATHS) $(OFILES) $(LIBS) -o $@
 
-$(BUILD)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -MMD -MP -MF $(@:.o=.d) -c $< -o $@
+%.o: %.c
+	@echo $(notdir $<)
+	$(CC) $(CFLAGS) -MMD -MP -MF $*.d -c $< -o $@
 
 -include $(DEPENDS)
 
 endif
 
+include $(DEVKITARM)/ds_rules
