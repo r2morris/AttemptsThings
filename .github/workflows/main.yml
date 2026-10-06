@@ -27,7 +27,3 @@ jobs:
           if-no-files-found: error
 
 
-
-That ZIP should contain your `.nds`.
-
-**One caveat:** this will solve the compiler/environment mess, but your current Makefile may still fail because we've been modifying it during troubleshooting. If you want the cleanest route, I can give you a **known-good modern devkitPro `Makefile` specifically for this project** next.
